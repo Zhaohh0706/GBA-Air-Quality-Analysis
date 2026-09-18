@@ -1,0 +1,8 @@
+# Days absent from the archive (source-side gaps), YYYYMMDD
+20150101
+20181222
+20181223
+20181224
+20181225
+20181226
+20190824

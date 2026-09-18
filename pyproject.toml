@@ -1,0 +1,22 @@
+[project]
+name = "gba-air-quality"
+version = "1.0.0"
+description = "Greater Bay Area air quality 2015–2024 from CNEMC monitoring data, assessed by the Chinese standard's own rules"
+requires-python = ">=3.10"
+authors = [{ name = "Haohang Zhao" }]
+license = { text = "MIT" }
+dependencies = ["pandas>=2.0", "pyarrow>=14", "numpy>=1.24", "scipy>=1.10", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "jupyter", "nbconvert"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["gba"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
