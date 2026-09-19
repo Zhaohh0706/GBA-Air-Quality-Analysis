@@ -174,3 +174,46 @@ class TestLockdown:
         from gba import analysis
         out = analysis.lockdown_february(self._days(bump_2020=0.0))
         assert abs(out.loc["PM2.5", "change_pct"]) > 5.0
+
+
+class TestAQI:
+    """HJ 633-2012 Table 1, checked at its breakpoints."""
+
+    @pytest.mark.parametrize("pollutant,concentration,expected", [
+        ("PM2.5", 35, 50), ("PM2.5", 75, 100), ("PM2.5", 115, 150),
+        ("O3_MDA8", 100, 50), ("O3_MDA8", 160, 100), ("O3_MDA8", 215, 150),
+        ("NO2", 40, 50), ("PM10", 150, 100), ("CO", 4, 100), ("SO2", 150, 100),
+    ])
+    def test_breakpoints_map_exactly(self, pollutant, concentration, expected):
+        from gba import aqi
+        assert aqi.iaqi(pollutant, concentration) == expected
+
+    def test_sub_indices_are_rounded_up_not_to_nearest(self):
+        # PM2.5 36 µg/m³ interpolates to 51.25; the standard rounds up, to 52.
+        from gba import aqi
+        assert aqi.iaqi("PM2.5", 36) == 52
+
+    def test_ties_make_both_pollutants_primary(self):
+        from gba import aqi
+        day = pd.DataFrame([{"date": pd.Timestamp("2020-07-01"), "city": "Shenzhen",
+                             "PM2.5": 75.0, "O3_MDA8": 160.0, "PM10": 10.0,
+                             "NO2": 10.0, "SO2": 5.0, "CO": 0.5}])
+        out = aqi.daily(day).iloc[0]
+        assert out["AQI"] == 100
+        assert out["primary_PM2.5"] and out["primary_O3_MDA8"]
+
+    def test_no_primary_pollutant_at_or_below_fifty(self):
+        from gba import aqi
+        day = pd.DataFrame([{"date": pd.Timestamp("2020-07-01"), "city": "Shenzhen",
+                             "PM2.5": 30.0, "O3_MDA8": 90.0, "PM10": 40.0,
+                             "NO2": 30.0, "SO2": 5.0, "CO": 0.5}])
+        out = aqi.daily(day).iloc[0]
+        assert out["AQI"] <= 50
+        assert not any(out[f"primary_{p}"] for p in aqi.POLLUTANTS)
+
+    def test_a_day_missing_any_pollutant_gets_no_aqi(self):
+        from gba import aqi
+        day = pd.DataFrame([{"date": pd.Timestamp("2020-07-01"), "city": "Shenzhen",
+                             "PM2.5": 80.0, "O3_MDA8": np.nan, "PM10": 40.0,
+                             "NO2": 30.0, "SO2": 5.0, "CO": 0.5}])
+        assert aqi.daily(day).empty

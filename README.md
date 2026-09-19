@@ -26,6 +26,17 @@ national limit anywhere in the region**, in Dongguan (102% of the limit) and
 Jiangmen (105%). Every city is inside the limit for everything else — PM2.5 at
 49–64% of it, NO2 at 36–72%.
 
+**Ozone now sets the air quality index on four polluted days in five.** Scoring
+every city-day by HJ 633-2012 — each pollutant's sub-index from the standard's
+table, the AQI as the largest — ozone was the primary pollutant on **40%** of
+polluted days (AQI above 50) in 2015 and **81%** in 2024, peaking at 84% in 2022.
+PM2.5 went the other way, from 32% to 8%. Whichever ozone statistic is taken, the
+change is upward and not statistically significant: the 90th percentile of MDA8
++4% (p = 0.48), its annual mean +9% (p = 0.11). Ozone has not got much worse; it
+has become the problem because everything else got better.
+
+![Primary pollutant on polluted days](outputs/primary_pollutant.png)
+
 ![Change over the decade, every city and pollutant](outputs/pollutant_trend_heatmap.png)
 
 **The two problems peak in different seasons.** PM2.5 is a winter problem —
@@ -92,6 +103,10 @@ Both ends of the record agree to within half a microgram.
   few to trust least squares with one unusual year in them; Theil–Sen is the
   median of pairwise slopes, and Mann–Kendall tests the ranks without assuming a
   shape for the change.
+- **The daily AQI follows HJ 633-2012**: sub-indices from the standard's
+  daily breakpoints, rounded up as it requires, computed only on city-days where
+  all six pollutants are valid, so a data gap cannot quietly stop a pollutant
+  from being primary.
 - **The lockdown is measured with the holiday held fixed**, as above. A test in
   `tests/` shows that with no lockdown effect at all, a calendar-month comparison
   still reports a change of more than 5% purely from where the festival fell.
@@ -119,7 +134,7 @@ Both ends of the record agree to within half a microgram.
 ```bash
 pip install -r requirements.txt
 
-make test       # 20 tests on the validity rules and the statistics
+make test       # 34 tests on the validity rules, the AQI and the statistics
 make notebook   # rerun the analysis from the committed tables, regenerate every figure
 make download   # optional: fetch every day 2015–2024 again (about two hours, resumable)
 make data       # optional: rebuild the tables from the downloaded days
@@ -152,14 +167,15 @@ Units are µg/m³ throughout, except CO in mg/m³.
 ```
 gba/
   metrics.py         validity rules, daily MDA8, annual assessment statistics, trends
+  aqi.py             daily AQI and primary pollutant by HJ 633-2012
   analysis.py        one function per question this README answers
-  figures.py         the six figures
+  figures.py         the seven figures
 scripts/
   download_cnemc.py  every day from the archive, nine cities kept, cached
   build_dataset.py   hourly archive -> daily, monthly and annual tables
 notebooks/
   analysis.ipynb     the analysis, executed, with every table and figure
-tests/               20 tests, each rule tested at its boundary
+tests/               34 tests, each rule tested at its boundary
 outputs/             figures
 ```
 

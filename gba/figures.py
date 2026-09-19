@@ -160,9 +160,26 @@ def against_standard(years: pd.DataFrame, year: int) -> Path:
     return _save(fig, "vs_standard.png")
 
 
+def primary_pollutant(days: pd.DataFrame) -> Path:
+    """Which pollutant sets the AQI on polluted days, year by year."""
+    shares = analysis.primary_pollutant_shares(days)
+    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    for column, colour, label in (("O3_MDA8", OZONE, "O3 (MDA8)"), ("PM2.5", PM, "PM2.5"),
+                                  ("NO2", "#6366f1", "NO2"), ("PM10", "#0ea5e9", "PM10")):
+        ax.plot(shares.index, shares[column], marker="o", color=colour,
+                linewidth=2.4 if column in ("O3_MDA8", "PM2.5") else 1.2, label=label)
+    ax.set_ylim(0, 100)
+    ax.set_ylabel("Share of polluted city-days (AQI > 50), %")
+    ax.set_title("Primary pollutant on polluted days: ozone has taken over (HJ 633-2012)", fontsize=10.5)
+    ax.set_xticks(shares.index)
+    ax.legend(frameon=False, ncol=4, loc="upper left")
+    return _save(fig, "primary_pollutant.png")
+
+
 def all_figures(latest_year: int) -> list[Path]:
     days, months, years = analysis.load()
     return [
         diverging_trends(years), pm25_by_city(years), trend_heatmap(years),
         seasonal_cycle(months), lockdown(days), against_standard(years, latest_year),
+        primary_pollutant(days),
     ]

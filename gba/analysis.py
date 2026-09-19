@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import metrics
+from . import aqi, metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -126,3 +126,23 @@ def against_standard(years: pd.DataFrame, year: int) -> pd.DataFrame:
     for p, limit in metrics.GRADE_II.items():
         out[p] = 100.0 * group[p] / limit
     return out.sort_values("PM2.5")
+
+
+def primary_pollutant_shares(days: pd.DataFrame) -> pd.DataFrame:
+    """Per year, the share of polluted city-days (AQI > 50) on which each pollutant is primary.
+
+    Shares can sum to more than 100% because tied pollutants are both primary.
+    """
+    table = aqi.daily(days)
+    polluted = table[table["AQI"] > 50].assign(year=lambda f: f["date"].dt.year)
+    flags = [f"primary_{p}" for p in aqi.POLLUTANTS]
+    shares = polluted.groupby("year")[flags].mean().mul(100)
+    shares.columns = aqi.POLLUTANTS
+    shares["polluted_city_days"] = polluted.groupby("year").size()
+    return shares
+
+
+def ozone_exceedance(days: pd.DataFrame) -> pd.Series:
+    """Per year, the share of valid city-days with MDA8 above the 160 µg/m³ Grade II limit."""
+    valid = days.dropna(subset=["O3_MDA8"])
+    return valid.groupby(valid["date"].dt.year)["O3_MDA8"].apply(lambda s: 100.0 * (s > 160).mean())
